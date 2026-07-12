@@ -13,6 +13,7 @@
     "ui:add": "ui-thing add",
     "ui:init": "ui-thing init",
     "import:posts": "tsx scripts/import-quotes.ts",
+    "seed:posts": "tsx scripts/seed-posts.ts",
     "smoke:deploy": "node scripts/smoke-deploy.mjs"
   },
   "dependencies": {

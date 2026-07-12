@@ -132,12 +132,12 @@
 
 :root {
   --radius: 0.65rem;
-  --page: #ebe8e2;
+  --page: #111;
   --brass: #c4a574;
   --header-fg: #f3efe6;
-  --background: #ebe8e2;
+  --background: #111;
   --foreground: oklch(0.2 0.01 70);
-  --card: #f7f5f0;
+  --card: #111;
   --card-foreground: oklch(0.2 0.01 70);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
@@ -169,12 +169,12 @@
 }
 
 .dark {
-  --page: #12100e;
+  --page: #111;
   --brass: #d4b896;
   --header-fg: #f3efe6;
-  --background: oklch(0.145 0 0);
+  --background: #111;
   --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
+  --card: #111;
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);

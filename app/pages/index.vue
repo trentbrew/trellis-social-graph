@@ -37,7 +37,7 @@
 
 <style scoped>
 .app-header {
-  background: #12100e;
+  background: #111;
 }
 
 .app-header__wash {
@@ -46,7 +46,7 @@
   background:
     radial-gradient(ellipse 80% 60% at 15% 20%, rgb(196 165 116 / 0.14), transparent 55%),
     radial-gradient(ellipse 70% 50% at 90% 10%, rgb(90 70 50 / 0.35), transparent 50%),
-    linear-gradient(165deg, #1a1714 0%, #12100e 45%, #0c0b0a 100%);
+    linear-gradient(165deg, #1a1714 0%, #111 45%, #0c0b0a 100%);
 }
 
 .app-header__grain {

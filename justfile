@@ -44,6 +44,10 @@ db:
 import-posts:
     pnpm run import:posts
 
+# Seed sample posts → graph (requires `just db`)
+seed:
+    pnpm run seed:posts
+
 # Deploy room node to Sprites (writes remote url + apiKey into .trellis-db.json)
 deploy-db name="trellis-social":
     pnpm run smoke:deploy -- {{name}}
