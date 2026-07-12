@@ -1,0 +1,16 @@
+.notes
+.nuxt
+.output
+.data
+dist
+node_modules
+*.log
+.DS_Store
+.trellis-db.json
+.trellis-db
+.trellis
+.vercel
+.env
+.env.*
+!.env.example
+.local
