@@ -1,4 +1,27 @@
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import tailwindcss from '@tailwindcss/vite';
+
+/** Local fallback from `just db-init` — env vars win (Sprites / Vercel). */
+function readLocalTrellisConfig(): { url?: string; apiKey?: string } {
+  const path = resolve(process.cwd(), '.trellis-db.json');
+  if (!existsSync(path)) return {};
+  try {
+    const cfg = JSON.parse(readFileSync(path, 'utf8')) as {
+      url?: string;
+      port?: number;
+      apiKey?: string;
+    };
+    return {
+      url: cfg.url ?? (cfg.port ? `http://127.0.0.1:${cfg.port}` : undefined),
+      apiKey: cfg.apiKey,
+    };
+  } catch {
+    return {};
+  }
+}
+
+const localTrellis = readLocalTrellisConfig();
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
@@ -15,9 +38,12 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       trellisUrl:
-        process.env.NUXT_PUBLIC_TRELLIS_URL ?? 'http://127.0.0.1:8230',
-      /** Demo/public key only — same pattern as fractal-playground. */
-      trellisApiKey: process.env.NUXT_PUBLIC_TRELLIS_API_KEY ?? '',
+        process.env.NUXT_PUBLIC_TRELLIS_URL ??
+        localTrellis.url ??
+        'http://127.0.0.1:8230',
+      /** Demo/public key — env, else `.trellis-db.json` (upload requires Bearer). */
+      trellisApiKey:
+        process.env.NUXT_PUBLIC_TRELLIS_API_KEY ?? localTrellis.apiKey ?? '',
     },
   },
 

@@ -1,12 +1,16 @@
 # trellis-social-nuxt
 
-A starter template for building social apps on the [Trellis](https://github.com/trentbrew/trellis) graph. Comes with a working social feed demo — posts, people, and tags linked together in a typed knowledge graph.
+A starter template for building social apps on the
+[Trellis](https://github.com/trentbrew/trellis) graph. Comes with a working
+social feed demo — posts, people, and tags linked together in a typed knowledge
+graph.
 
 ## Stack
 
 - [Nuxt](https://nuxt.com/) + Vue 3
 - [UI Thing](https://uithing.com/) (shadcn-style Nuxt components)
-- [Trellis](https://github.com/trentbrew/trellis) typed graph (`defineType` + `trellis/vue/typed`)
+- [Trellis](https://github.com/trentbrew/trellis) typed graph (`defineType` +
+  `trellis/vue/typed`)
 
 The browser talks directly to the Trellis room node (local `:8230` or a Sprites
 `*.sprites.app` URL). Nuxt's WebSocket proxy is unreliable for `/realtime`, so
@@ -22,11 +26,15 @@ just web            # Nuxt only
 just ui button      # add UI Thing components
 ```
 
-Dev server: http://localhost:1979
+Dev server: http://localhost:1111
 
 Local `just db` uses desk-local `trellis-node` (not npm `trellis`) so
 `POST /entities` honors client-supplied IDs when iterating on the kernel. The
 app depends on npm `trellis@^3.2.5` for the client SDK (Vercel-safe).
+
+Nuxt reads `url` + `apiKey` from `.trellis-db.json` when `NUXT_PUBLIC_TRELLIS_*`
+env vars are unset — blob upload requires the Bearer token whenever the room
+node was initialized with an API key.
 
 ### Graph model
 
@@ -64,5 +72,6 @@ See `.env.example`. The `*.sprites.app` URL is **API only** — not the Nuxt UI.
 
 1. Edit `app/lib/schemas/social.ts` to define your own entity types
 2. Update the plugin at `app/plugins/trellis.client.ts` to register them
-3. Build your UI in `app/components/` — the `SocialFeed` component is a working reference
+3. Build your UI in `app/components/` — the `SocialFeed` component is a working
+   reference
 4. Run `just ui <component>` to scaffold UI Thing components as needed

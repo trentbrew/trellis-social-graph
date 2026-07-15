@@ -1,10 +1,7 @@
 <script setup lang="ts">
 import { useBreakpoints, breakpointsTailwind, useLocalStorage } from '@vueuse/core';
-import { resolveRelations } from 'trellis/schema';
-import { useMutation } from 'trellis/vue/typed';
+import { useEntities, useMutation } from 'trellis/vue/typed';
 import { Post, type PersonT, type TagT } from '~/lib/schemas/social';
-
-const PAGE_SIZE = 24;
 
 type PostLoaded = {
   id: string;
@@ -12,20 +9,18 @@ type PostLoaded = {
   published: boolean;
   likes?: number;
   reposts?: number;
+  imageUrl?: string;
   author: PersonT | string;
   tags: Array<TagT | string>;
 };
 
 const client = useTrellis();
+const config = useRuntimeConfig();
+const fileUrl = (hash: string) => `${config.public.trellisUrl}/files/${hash}`;
 const postMutations = useMutation(client, Post);
 
-// Local pagination/live state
-const items = ref<PostLoaded[]>([]);
-const offset = ref(0);
-const total = ref<number | null>(null);
-const loading = ref(false);
-const error = ref<Error | null>(null);
-const sentinel = useTemplateRef<HTMLElement>('sentinel');
+// Live feed — WebSocket subscription, auto-updates across all clients
+const feed = useEntities(client, Post, { resolve: { author: true, tags: true } });
 
 // Tabs and favorites
 const activeTab = ref<'feed' | 'saved'>('feed');
@@ -50,8 +45,8 @@ const colsCount = computed(() => {
 
 const itemsWithIndex = computed(() => {
   const list = activeTab.value === 'saved'
-    ? items.value.filter((p) => savedPosts.value[p.id])
-    : items.value;
+    ? feed.value.data.filter((p) => savedPosts.value[p.id])
+    : feed.value.data;
   return list.map((item, index) => ({ item, index }));
 });
 
@@ -67,64 +62,11 @@ const columns = computed(() => {
   return buckets;
 });
 
-const hasMore = computed(() => {
-  if (activeTab.value === 'saved') return false;
-  if (total.value === null) return true;
-  return items.value.length < total.value;
-});
-
-const seen = new Set<string>();
-
-async function loadMore() {
-  if (loading.value || !hasMore.value || activeTab.value === 'saved') return;
-  loading.value = true;
-  error.value = null;
-  try {
-    const page = await client.list('Post', {
-      limit: PAGE_SIZE,
-      offset: offset.value,
-    });
-    total.value = page.total;
-    const resolved = (await resolveRelations(client, Post, page.data, {
-      author: true,
-      tags: true,
-    })) as unknown as PostLoaded[];
-
-    for (const p of resolved) {
-      if (seen.has(p.id)) continue;
-      seen.add(p.id);
-      items.value.push(p);
-    }
-    offset.value += page.data.length;
-    if (page.data.length === 0) total.value = items.value.length;
-  } catch (err) {
-    error.value = err instanceof Error ? err : new Error(String(err));
-  } finally {
-    loading.value = false;
-  }
-}
-
-useIntersectionObserver(
-  sentinel,
-  ([entry]) => {
-    if (entry?.isIntersecting) void loadMore();
-  },
-  { root: null, rootMargin: '480px', threshold: 0 },
-);
-
-onMounted(() => {
-  void loadMore();
-});
-
 // Interactive Affordances
 async function toggleLike(p: PostLoaded) {
   const isLiked = likedPosts.value[p.id];
   const currentLikes = typeof p.likes === 'number' ? p.likes : 0;
   const newLikes = isLiked ? Math.max(0, currentLikes - 1) : currentLikes + 1;
-
-  // Optimistic update
-  const item = items.value.find((i) => i.id === p.id);
-  if (item) item.likes = newLikes;
 
   if (isLiked) {
     delete likedPosts.value[p.id];
@@ -136,7 +78,6 @@ async function toggleLike(p: PostLoaded) {
     await postMutations.update(p.id, { likes: newLikes });
   } catch (err) {
     console.error('Failed to update likes:', err);
-    if (item) item.likes = currentLikes;
     if (isLiked) likedPosts.value[p.id] = true;
     else delete likedPosts.value[p.id];
   }
@@ -207,17 +148,17 @@ function tagLabel(tag: TagT | string): string {
     </div>
 
     <!-- Empty/Loading States -->
-    <p v-if="loading && items.length === 0" class="text-sm text-muted-foreground">
+    <p v-if="feed.loading && feed.data.length === 0" class="text-sm text-muted-foreground">
       Loading feed…
     </p>
-    <p v-else-if="error && items.length === 0" class="text-sm text-destructive">
-      {{ error.message }}
+    <p v-else-if="feed.error && feed.data.length === 0" class="text-sm text-destructive">
+      {{ feed.error.message }}
     </p>
     <div v-else-if="itemsWithIndex.length === 0" class="py-12 text-center space-y-2">
       <p class="text-sm text-muted-foreground">
         {{ activeTab === 'saved' ? 'No saved posts yet. Bookmark posts to save them here.' : 'No posts found.' }}
       </p>
-      <p v-if="activeTab === 'feed' && items.length === 0" class="text-xs text-muted-foreground/80">
+      <p v-if="activeTab === 'feed' && feed.data.length === 0" class="text-xs text-muted-foreground/80">
         Seed data with the import script while the DB is running.
       </p>
     </div>
@@ -227,11 +168,19 @@ function tagLabel(tag: TagT | string): string {
       <div v-for="(col, colIdx) in columns" :key="colIdx" class="flex flex-col gap-5">
         <article v-for="entry in col" :key="entry.item.id"
           class="feed-card rounded-xl border border-border/50 bg-card/75 p-5 shadow-sm backdrop-blur-[2px] transition-[transform,box-shadow,background-color] duration-300 hover:-translate-y-0.5 hover:shadow-md hover:bg-card"
-          :style="{ animationDelay: `${(entry.index % PAGE_SIZE) * 28}ms` }">
+          :style="{ animationDelay: `${(entry.index % 24) * 28}ms` }">
           <!-- Post content -->
           <p class="text-[0.95rem] leading-relaxed text-foreground whitespace-pre-line">
             {{ entry.item.content }}
           </p>
+
+          <!-- Post image -->
+          <img v-if="entry.item.imageUrl"
+            :src="fileUrl(entry.item.imageUrl)"
+            alt="Post image"
+            loading="lazy"
+            class="mt-3 w-full max-h-72 rounded-lg object-cover ring-1 ring-border/20"
+          />
 
           <!-- Author details -->
           <div class="mt-4 flex items-center gap-3">
@@ -296,17 +245,10 @@ function tagLabel(tag: TagT | string): string {
       </div>
     </div>
 
-    <!-- Scroll Sentinel -->
-    <div ref="sentinel" class="flex min-h-12 items-center justify-center py-6" aria-hidden="true">
-      <p v-if="loading && items.length > 0" class="text-xs text-muted-foreground">
-        Loading more…
-      </p>
-      <p v-else-if="!hasMore && items.length > 0 && activeTab !== 'saved'"
-        class="text-xs tracking-wide text-muted-foreground">
-        {{ items.length.toLocaleString() }} posts
-      </p>
-      <p v-else-if="error && items.length > 0" class="text-xs text-destructive">
-        {{ error.message }}
+    <!-- Feed Footer -->
+    <div v-if="feed.data.length > 0 && activeTab !== 'saved'" class="flex justify-center py-6">
+      <p class="text-xs tracking-wide text-muted-foreground">
+        {{ feed.data.length.toLocaleString() }} posts · live
       </p>
     </div>
   </div>

@@ -37,6 +37,7 @@ export const Post = defineType(
     published: z.boolean().default(false),
     likes: z.number().default(0),
     reposts: z.number().default(0),
+    imageUrl: z.string().optional(),
   },
   {
     title: 'content',

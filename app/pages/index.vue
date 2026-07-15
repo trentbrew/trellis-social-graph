@@ -1,3 +1,6 @@
+<script setup lang="ts">
+</script>
+
 <template>
   <div class="min-h-dvh bg-page">
     <header class="app-header relative overflow-hidden text-header-fg">
@@ -6,21 +9,23 @@
       <div class="app-header__glow" aria-hidden="true" />
 
       <div class="relative mx-auto max-w-6xl px-6 pb-16 pt-14 sm:px-8 sm:pb-20 sm:pt-20">
-        <p
-          class="header-rise mb-5 text-[11px] font-medium uppercase tracking-[0.28em] text-brass"
-        >
+        <!-- Profile avatar -->
+        <div class="absolute right-6 top-10 sm:right-8 sm:top-14">
+          <div
+            class="flex h-10 w-10 items-center justify-center rounded-full bg-brass/20 ring-2 ring-brass/40 text-sm font-medium text-brass">
+            Y
+          </div>
+        </div>
+
+        <p class="header-rise mb-5 text-[11px] font-medium uppercase tracking-[0.28em] text-brass">
           A social graph starter
         </p>
-        <h1
-          class="header-rise font-display text-[clamp(2.75rem,8vw,5.5rem)] font-medium leading-[0.95] tracking-tight"
-          style="animation-delay: 60ms"
-        >
+        <h1 class="header-rise font-display text-[clamp(2.75rem,8vw,5.5rem)] font-medium leading-[0.95] tracking-tight"
+          style="animation-delay: 60ms">
           trellis social
         </h1>
-        <p
-          class="header-rise mt-6 max-w-xl text-base leading-relaxed text-header-fg/70 sm:text-lg"
-          style="animation-delay: 120ms"
-        >
+        <p class="header-rise mt-6 max-w-xl text-base leading-relaxed text-header-fg/70 sm:text-lg"
+          style="animation-delay: 120ms">
           A starter template for building social apps on the Trellis graph.
           Posts, people, and tags — all linked, all queryable.
         </p>
@@ -30,6 +35,7 @@
     </header>
 
     <main class="relative mx-auto max-w-6xl px-6 pb-20 pt-10 sm:px-8 sm:pt-12">
+      <ComposePost class="mb-8" />
       <SocialFeed />
     </main>
   </div>
@@ -85,6 +91,7 @@
     opacity: 0;
     transform: translateY(14px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
